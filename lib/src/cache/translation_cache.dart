@@ -3,6 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class TranslationCache {
   static const String translationsKey = 'verblaze_translations';
+  static const String currentLanguageKey = 'verblaze_current_language';
+
+  static Future<void> saveCurrentLanguage(String languageCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(currentLanguageKey, languageCode);
+  }
+
+  static Future<String?> getCurrentLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(currentLanguageKey);
+  }
 
   static Future<void> cacheTranslations(
       Map<String, List<dynamic>> translations) async {

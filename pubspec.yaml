@@ -1,6 +1,6 @@
 name: verblaze_flutter
 description: Flutter SDK for Verblaze Translation Management System
-version: 1.0.0
+version: 1.1.0
 homepage: https://verblaze.com
 repository: https://github.com/Verblaze/verblaze_flutter
 
@@ -13,6 +13,7 @@ dependencies:
     sdk: flutter
   http: ^0.13.0
   shared_preferences: ^2.3.3
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_lints: ^4.0.0

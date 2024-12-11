@@ -27,8 +27,16 @@ class Verblaze {
   static Future<void> configure(String apiKey) async {
     _apiKey = apiKey;
     _prefs = await SharedPreferences.getInstance();
+
     await _checkVersion();
     await _fetchSupportedLanguages();
+
+    // Kaydedilmiş dili kontrol et
+    final savedLanguage = await TranslationCache.getCurrentLanguage();
+    if (savedLanguage != null) {
+      await VerblazeProvider.setInitialLanguage(savedLanguage);
+    }
+
     await _fetchTranslations();
   }
 
@@ -71,7 +79,6 @@ class Verblaze {
         Uri.parse('$_baseUrl/supported-languages'),
         headers: {'x-api-key': _apiKey!},
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _supportedLanguages = (data['data']['supportedLanguages'] as List)

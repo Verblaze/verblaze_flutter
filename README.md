@@ -17,6 +17,8 @@ Verblaze Flutter SDK is a powerful translation management system integration tha
 - 📱 Optimized for Flutter applications
 - ⚡️ High-performance operation
 - 🔌 Simple API integration
+- 🎯 Auto-translated widgets
+- 🔄 Robust error handling
 
 ## Getting Started
 
@@ -26,7 +28,7 @@ Add Verblaze Flutter SDK to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  verblaze_flutter: ^1.0.0
+  verblaze_flutter: ^1.1.0
 ```
 
 Then run:
@@ -48,6 +50,28 @@ await Verblaze.configure('YOUR_API_KEY');
 
 ## Usage
 
+### Creating Auto-Translated Widgets
+
+You can create widgets that automatically update when the language changes by extending `AutoTranslatedWidget`:
+
+```dart
+class WelcomeScreen extends AutoTranslatedWidget {
+  const WelcomeScreen({super.key});
+
+  @override
+  Widget buildView(BuildContext context, VerblazeProvider provider) {
+    return Column(
+      children: [
+        Text('welcome.title'.vbt),
+        Text('welcome.description'.vbt),
+      ],
+    );
+  }
+}
+```
+
+The widget will automatically rebuild whenever the language changes, ensuring your UI stays in sync with the selected language.
+
 ### Simple Translation
 
 ```dart
@@ -65,7 +89,7 @@ final provider = VerblazeProvider();
 provider.setLanguage('en'); // Switch to English
 ```
 
-### Usage in Widget Tree
+### Usage in Regular Widgets
 
 ```dart
 class MyWidget extends StatelessWidget {
@@ -103,13 +127,17 @@ print('Current language: ${currentLang?.nativeName}');
 
 ## Error Handling
 
-The SDK throws `VerblazeException` when translation keys are not found or API communication fails:
+The SDK provides comprehensive error handling:
 
 ```dart
 try {
   final text = "invalid_key".vbt;
 } on VerblazeException catch (e) {
   print('Translation error: ${e.message}');
+} on CacheException catch (e) {
+  print('Cache error: ${e.message}');
+} on NetworkException catch (e) {
+  print('Network error: ${e.message}');
 }
 ```
 

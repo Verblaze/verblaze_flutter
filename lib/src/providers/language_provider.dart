@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../verblaze_base.dart';
 import '../models/language.dart';
 import '../exceptions/verblaze_exception.dart';
+import '../cache/translation_cache.dart';
 
 /// Provider class for managing current language and translations
 class VerblazeProvider extends ChangeNotifier {
@@ -9,7 +10,7 @@ class VerblazeProvider extends ChangeNotifier {
   factory VerblazeProvider() => _instance;
   VerblazeProvider._internal();
 
-  String _currentLanguage = 'en';
+  String _currentLanguage = 'en-US';
 
   /// Gets current language code
   String get currentLanguage => _currentLanguage;
@@ -22,9 +23,10 @@ class VerblazeProvider extends ChangeNotifier {
       supportedLanguages.firstWhere((lang) => lang.code == _currentLanguage);
 
   /// Sets current language
-  void setLanguage(String languageCode) {
+  void setLanguage(String languageCode) async {
     if (supportedLanguages.any((lang) => lang.code == languageCode)) {
       _currentLanguage = languageCode;
+      await TranslationCache.saveCurrentLanguage(languageCode);
       notifyListeners();
     } else {
       throw VerblazeException('Unsupported language code: $languageCode');
