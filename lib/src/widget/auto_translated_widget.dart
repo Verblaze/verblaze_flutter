@@ -14,3 +14,24 @@ abstract class AutoTranslatedWidget extends StatelessWidget {
     });
   }
 }
+
+abstract class AutoTranslatedStatefulWidget extends StatefulWidget {
+  const AutoTranslatedStatefulWidget({super.key});
+
+  @override
+  AutoTranslatedState createState();
+}
+
+abstract class AutoTranslatedState<T extends AutoTranslatedStatefulWidget>
+    extends State<T> {
+  Widget buildView(BuildContext context, VerblazeProvider provider);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<VerblazeProvider>(
+      builder: (context, provider, child) {
+        return buildView(context, provider);
+      },
+    );
+  }
+}

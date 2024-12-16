@@ -1,3 +1,9 @@
+## 1.1.2
+
+- Performance improvements
+- Enhanced error handling
+- Bug fixes and stability improvements
+
 ## 1.1.1
 
 - Documentation improvements
