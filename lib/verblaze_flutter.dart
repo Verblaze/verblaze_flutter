@@ -8,3 +8,4 @@ export 'src/exceptions/verblaze_exception.dart';
 export 'src/providers/language_provider.dart';
 export 'src/extensions/string_extension.dart';
 export 'src/managers/translation_manager.dart';
+export 'src/widget/auto_translated_widget.dart';

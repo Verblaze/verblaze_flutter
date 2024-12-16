@@ -1,3 +1,10 @@
+## 1.1.3
+
+- Added AutoTranslatedWidget and AutoTranslatedStatefulWidget for automatic language updates
+- Improved widget rebuilding performance
+- Enhanced state management for translations
+- Documentation updates for auto-translated widgets
+
 ## 1.1.2
 
 - Performance improvements

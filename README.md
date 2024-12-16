@@ -25,7 +25,7 @@ Add this dependency to your pubspec.yaml file:
 
 ```yaml
 dependencies:
-  verblaze_flutter: ^1.1.2
+  verblaze_flutter: ^1.1.3
   provider: ^6.1.2
 ```
 
