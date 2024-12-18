@@ -22,6 +22,17 @@ class VerblazeProvider extends ChangeNotifier {
   Language? get currentLanguageObject =>
       supportedLanguages.firstWhere((lang) => lang.code == _currentLanguage);
 
+  /// Gets list of supported locales
+  List<Locale> get supportedLocales => supportedLanguages
+      .map((lang) => Locale(lang.code.split('-')[0], lang.code.split('-')[1]))
+      .toList();
+
+  /// Gets current locale
+  Locale get currentLocale {
+    final parts = _currentLanguage.split('-');
+    return Locale(parts[0], parts[1]);
+  }
+
   /// Sets current language
   void setLanguage(String languageCode) async {
     if (supportedLanguages.any((lang) => lang.code == languageCode)) {

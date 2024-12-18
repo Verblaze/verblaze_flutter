@@ -1,3 +1,20 @@
+## 1.1.5
+
+- Added supportedLocales and currentLocale getters for better Flutter localization support
+- Updated Language model structure
+- Documentation updates
+
+## 1.1.4
+
+- Enhanced automatic language detection
+- Added device language detection support
+- Updated language selection priority order:
+  1. Saved language check
+  2. Device language check
+  3. Base language fallback
+- Added Flutter Localization support
+- Documentation updates
+
 ## 1.1.3
 
 - Added AutoTranslatedWidget and AutoTranslatedStatefulWidget for automatic language updates

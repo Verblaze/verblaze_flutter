@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:verblaze_flutter/src/cache/translation_cache.dart';
 import 'package:verblaze_flutter/verblaze_flutter.dart';
+import 'package:flutter/widgets.dart';
 
 /// Main class for Verblaze SDK
 class Verblaze {
@@ -31,10 +32,35 @@ class Verblaze {
     await _checkVersion();
     await _fetchSupportedLanguages();
 
-    // Kaydedilmiş dili kontrol et
+    // Dil seçim mantığı
+    String? selectedLanguage;
+
+    // 1. Kayıtlı dili kontrol et
     final savedLanguage = await TranslationCache.getCurrentLanguage();
-    if (savedLanguage != null) {
-      await VerblazeProvider.setInitialLanguage(savedLanguage);
+    if (savedLanguage != null &&
+        _supportedLanguages!.any((lang) => lang.code == savedLanguage)) {
+      selectedLanguage = savedLanguage;
+    }
+
+    // 2. Cihaz dilini kontrol et
+    if (selectedLanguage == null) {
+      final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+      final deviceLanguageCode =
+          '${deviceLocale.languageCode}-${deviceLocale.countryCode?.toUpperCase()}';
+
+      if (_supportedLanguages!.any((lang) => lang.code == deviceLanguageCode)) {
+        selectedLanguage = deviceLanguageCode;
+      }
+    }
+
+    // 3. Base dili kullan
+    if (selectedLanguage == null && _baseLanguage != null) {
+      selectedLanguage = _baseLanguage!.code;
+    }
+
+    // Seçilen dili ayarla
+    if (selectedLanguage != null) {
+      await VerblazeProvider.setInitialLanguage(selectedLanguage);
     }
 
     await _fetchTranslations();
@@ -133,11 +159,21 @@ class Verblaze {
 
     final fileKey = keyParts[0];
     final translationKey = keyParts[1];
-
     return _translationManager.getTranslation(
         languageCode, fileKey, translationKey);
   }
 
   static List<Language> get supportedLanguages => _supportedLanguages ?? [];
   static Language? get baseLanguage => _baseLanguage;
+
+  /// Gets list of supported locales
+  static List<Locale> get supportedLocales => supportedLanguages
+      .map((lang) => Locale(lang.code.split('-')[0], lang.code.split('-')[1]))
+      .toList();
+
+  /// Gets current locale
+  static Locale get currentLocale {
+    final provider = VerblazeProvider();
+    return provider.currentLocale;
+  }
 }
