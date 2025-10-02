@@ -1,5 +1,4 @@
 import '../models/translation.dart';
-import '../exceptions/verblaze_exception.dart';
 
 /// Manages translations for different languages and files
 class TranslationManager {
@@ -20,22 +19,25 @@ class TranslationManager {
   }
 
   /// Gets a specific translation value
+  /// Returns the translation if found, otherwise returns the translationKey as fallback
   String getTranslation(
       String language, String fileKey, String translationKey) {
     final languageTranslations = _translations[language];
     if (languageTranslations == null) {
-      throw VerblazeException('Language not found: $language');
+      // Return the translation key as fallback when language not found
+      return translationKey;
     }
 
     final file = languageTranslations[fileKey];
     if (file == null) {
-      throw VerblazeException('Translation file not found: $fileKey');
+      // Return the translation key as fallback when file not found
+      return translationKey;
     }
 
     final translation = file.values[translationKey];
     if (translation == null) {
-      throw VerblazeException(
-          'Translation key not found: $translationKey in file: $fileKey');
+      // Return the translation key as fallback when translation not found
+      return translationKey;
     }
 
     return translation;

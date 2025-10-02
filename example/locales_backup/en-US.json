@@ -1,0 +1,32 @@
+{
+  "language": "en-US",
+  "translations": {
+    "home": {
+      "values": {
+        "home": "Home",
+        "go_settings": "Go Settings"
+      }
+    },
+    "home_view": {
+      "values": {
+        "home": "Home",
+        "go_settings": "Go Settings"
+      }
+    },
+    "settings_view": {
+      "values": {
+        "change_language": "Change Language",
+        "change_of_app": "Change of app",
+        "go_back": "Go back",
+        "settings": "Settings",
+        "text_123": "English Test Text"
+      }
+    },
+    "language_selector_bottom_sheet": {
+      "values": {
+        "languages": "Languages",
+        "test": "123"
+      }
+    }
+  }
+}

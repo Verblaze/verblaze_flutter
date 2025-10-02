@@ -1,17 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:verblaze_flutter/src/cache/translation_cache.dart';
+import 'package:verblaze_flutter/src/loaders/local_translation_loader.dart';
 import 'package:verblaze_flutter/verblaze_flutter.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 
 /// Main class for Verblaze SDK
 class Verblaze {
   static Verblaze? _instance;
   static String? _apiKey;
   static const String _baseUrl = 'https://api.verblaze.com/v1';
-  static const String _versionKey = 'verblaze_translation_version';
-  static late final SharedPreferences _prefs;
   static final TranslationManager _translationManager = TranslationManager();
   static List<Language>? _supportedLanguages;
   static Language? _baseLanguage;
@@ -24,77 +23,168 @@ class Verblaze {
     return _instance!;
   }
 
-  /// Configures the SDK with API key
-  static Future<void> configure(String apiKey) async {
-    _apiKey = apiKey;
-    _prefs = await SharedPreferences.getInstance();
+  /// Configures the SDK with optional API key
+  /// Only loads the selected language for optimal performance
+  /// API key is only required when using remote translations
+  static Future<void> configure([String? apiKey]) async {
+    // Check if local translations are available first
+    final hasLocalTranslations =
+        await LocalTranslationLoader.hasLocalTranslations();
 
-    await _checkVersion();
-    await _fetchSupportedLanguages();
+    if (hasLocalTranslations) {
+      // Use local translations - no API key needed
+      if (kDebugMode) {
+        debugPrint('Verblaze: Using local translations from locales folder');
+      }
 
-    // Dil seçim mantığı
-    String? selectedLanguage;
+      // Get supported languages from local files
+      _supportedLanguages =
+          await LocalTranslationLoader.getSupportedLanguages();
+      _baseLanguage = await LocalTranslationLoader.getBaseLanguage();
 
-    // 1. Kayıtlı dili kontrol et
+      // Determine which language to load
+      final selectedLanguage = await _determineLanguageToLoad();
+
+      // Load only the selected language
+      await _loadSingleLocalLanguage(selectedLanguage);
+
+      // Set selected language
+      await VerblazeProvider.setInitialLanguage(selectedLanguage);
+    } else {
+      // Use remote translations - API key required
+      if (apiKey == null || apiKey.isEmpty) {
+        throw VerblazeException(
+            'API key is required when no local translations are available. '
+            'Either provide an API key or add translation files to the locales folder.');
+      }
+      _apiKey = apiKey;
+      if (kDebugMode) {
+        print('Verblaze: Using remote translations from API');
+      }
+
+      // Fetch supported languages first
+      await _fetchSupportedLanguages();
+
+      // Determine which language to load
+      final selectedLanguage = await _determineLanguageToLoad();
+
+      // Load only the selected language
+      await _fetchSingleLanguageTranslation(selectedLanguage);
+
+      // Set selected language
+      await VerblazeProvider.setInitialLanguage(selectedLanguage);
+    }
+  }
+
+  /// Determines which language to load based on user preference, device language, or base language
+  static Future<String> _determineLanguageToLoad() async {
+    // 1. Check saved language
     final savedLanguage = await TranslationCache.getCurrentLanguage();
     if (savedLanguage != null &&
         _supportedLanguages!.any((lang) => lang.code == savedLanguage)) {
-      selectedLanguage = savedLanguage;
+      return savedLanguage;
     }
 
-    // 2. Cihaz dilini kontrol et
-    if (selectedLanguage == null) {
-      final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
-      final deviceLanguageCode =
-          '${deviceLocale.languageCode}-${deviceLocale.countryCode?.toUpperCase()}';
+    // 2. Check device language
+    final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+    final deviceLanguageCode =
+        '${deviceLocale.languageCode}-${deviceLocale.countryCode?.toUpperCase()}';
 
-      if (_supportedLanguages!.any((lang) => lang.code == deviceLanguageCode)) {
-        selectedLanguage = deviceLanguageCode;
-      }
+    if (_supportedLanguages!.any((lang) => lang.code == deviceLanguageCode)) {
+      return deviceLanguageCode;
     }
 
-    // 3. Base dili kullan
-    if (selectedLanguage == null && _baseLanguage != null) {
-      selectedLanguage = _baseLanguage!.code;
+    // 3. Use base language
+    if (_baseLanguage != null) {
+      return _baseLanguage!.code;
     }
 
-    // Seçilen dili ayarla
-    if (selectedLanguage != null) {
-      await VerblazeProvider.setInitialLanguage(selectedLanguage);
+    // 4. Fallback to first supported language
+    if (_supportedLanguages!.isNotEmpty) {
+      return _supportedLanguages!.first.code;
     }
 
-    await _fetchTranslations();
+    throw VerblazeException('No supported languages found');
   }
 
-  /// Checks for translation version updates
-  static Future<void> _checkVersion() async {
+  /// Loads a single language from local translations
+  static Future<void> _loadSingleLocalLanguage(String languageCode) async {
     try {
-      final currentVersion = _prefs.getInt(_versionKey) ?? 1;
+      final translations =
+          await LocalTranslationLoader.loadSingleLanguageTranslation(
+              languageCode);
+      if (translations != null) {
+        _translationManager.setTranslations(languageCode, translations);
+
+        // Cache the translation for consistency
+        await TranslationCache.cacheTranslations({languageCode: translations});
+
+        if (kDebugMode) {
+          debugPrint('Verblaze: Loaded local translations for $languageCode');
+        }
+      }
+    } catch (e) {
+      throw VerblazeException(
+          'Failed to load local translations for $languageCode: $e');
+    }
+  }
+
+  /// Fetches a single language translation from API
+  static Future<void> _fetchSingleLanguageTranslation(
+      String languageCode) async {
+    try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/version-check'),
+        Uri.parse('$_baseUrl/translations'),
         headers: {
-          'Content-Type': 'application/json',
           'x-api-key': _apiKey!,
+          'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'currentVersion': currentVersion,
-          'platform': 'flutter',
-        }),
+        body: jsonEncode({'language': languageCode}),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['data']['needsUpdate']) {
-          await _prefs.setInt(_versionKey, data['data']['latestVersion']);
-          await _fetchTranslations();
+        final translations = data['data']['translations'] as List<dynamic>;
 
-          // Cache'i temizle
-          final cache = await SharedPreferences.getInstance();
-          await cache.remove(TranslationCache.translationsKey);
+        _translationManager.setTranslations(languageCode, translations);
+
+        // Cache the translation
+        await TranslationCache.cacheTranslations({languageCode: translations});
+
+        if (kDebugMode) {
+          debugPrint('Verblaze: Fetched remote translations for $languageCode');
         }
+      } else {
+        throw VerblazeException(
+            'Failed to fetch translations for $languageCode: ${response.statusCode}');
       }
     } catch (e) {
-      throw VerblazeException('Failed to check version: $e');
+      throw VerblazeException(
+          'Failed to fetch translations for $languageCode: $e');
+    }
+  }
+
+  /// Loads a new language asynchronously (used when user changes language)
+  static Future<void> loadLanguage(String languageCode) async {
+    if (!_supportedLanguages!.any((lang) => lang.code == languageCode)) {
+      throw VerblazeException('Unsupported language code: $languageCode');
+    }
+
+    // Check if already loaded
+    if (_translationManager.hasTranslations(languageCode)) {
+      if (kDebugMode) {
+        debugPrint('Verblaze: Language $languageCode already loaded');
+      }
+      return;
+    }
+
+    final hasLocalTranslations =
+        await LocalTranslationLoader.hasLocalTranslations();
+
+    if (hasLocalTranslations) {
+      await _loadSingleLocalLanguage(languageCode);
+    } else {
+      await _fetchSingleLanguageTranslation(languageCode);
     }
   }
 
@@ -117,44 +207,11 @@ class Verblaze {
     }
   }
 
-  /// Fetches translations for all supported languages
-  static Future<void> _fetchTranslations() async {
-    if (_supportedLanguages == null) return;
-
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/translations/multiple'),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': _apiKey!,
-        },
-        body: jsonEncode({
-          'languages': _supportedLanguages!.map((lang) => lang.code).toList(),
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final translations =
-            data['data']['translations'] as Map<String, dynamic>;
-
-        translations.forEach((languageCode, languageTranslations) {
-          if (languageTranslations is List) {
-            _translationManager.setTranslations(
-                languageCode, languageTranslations);
-          }
-        });
-      }
-    } catch (e) {
-      throw VerblazeException('Failed to fetch translations: $e');
-    }
-  }
-
   static String translate(String key, String languageCode) {
     final keyParts = key.split('.');
     if (keyParts.length != 2) {
-      throw VerblazeException(
-          'Invalid translation key format. Use: file_key.translation_key');
+      // Return the original key as fallback for invalid format
+      return key;
     }
 
     final fileKey = keyParts[0];
@@ -165,6 +222,10 @@ class Verblaze {
 
   static List<Language> get supportedLanguages => _supportedLanguages ?? [];
   static Language? get baseLanguage => _baseLanguage;
+
+  /// Returns true if using local translations, false if using remote API
+  static Future<bool> get isUsingLocalTranslations =>
+      LocalTranslationLoader.hasLocalTranslations();
 
   /// Gets list of supported locales
   static List<Locale> get supportedLocales => supportedLanguages

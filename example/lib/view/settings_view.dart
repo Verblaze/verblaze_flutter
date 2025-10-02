@@ -1,4 +1,3 @@
-import 'package:verblaze_flutter/src/widget/auto_translated_widget.dart';
 import 'package:example/widget/language_selector_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:verblaze_flutter/verblaze_flutter.dart';
@@ -16,6 +15,7 @@ class SettingsView extends AutoTranslatedWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            Text("settings_view.text_123".vbt),
             Card(
               child: ListTile(
                 onTap: () {

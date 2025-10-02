@@ -6,7 +6,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Verblaze.configure("<API_KEY>");
+  // No API key needed when using local translations
+  await Verblaze.configure("vb-api-f99b79be9f809691");
   runApp(const MainApp());
 }
 

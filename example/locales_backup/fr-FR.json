@@ -1,0 +1,31 @@
+{
+  "language": "fr-FR",
+  "translations": {
+    "home": {
+      "values": {
+        "home": "Accueil",
+        "go_settings": "Aller aux paramètres"
+      }
+    },
+    "home_view": {
+      "values": {
+        "home": "Accueil",
+        "go_settings": "Aller aux paramètres"
+      }
+    },
+    "settings_view": {
+      "values": {
+        "change_language": "Changer de langue",
+        "change_of_app": "Changer d'application",
+        "go_back": "Retourner",
+        "settings": "Paramètres"
+      }
+    },
+    "language_selector_bottom_sheet": {
+      "values": {
+        "languages": "Langues",
+        "test": "123"
+      }
+    }
+  }
+}

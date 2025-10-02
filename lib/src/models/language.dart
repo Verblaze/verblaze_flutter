@@ -34,5 +34,14 @@ class Language {
   }
 
   @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Language &&
+        other.code == code &&
+        other.generalName == generalName &&
+        other.localName == localName;
+  }
+
+  @override
   int get hashCode => code.hashCode ^ generalName.hashCode ^ localName.hashCode;
 }

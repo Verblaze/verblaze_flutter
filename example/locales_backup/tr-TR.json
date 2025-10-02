@@ -1,0 +1,32 @@
+{
+  "language": "tr-TR",
+  "translations": {
+    "home": {
+      "values": {
+        "home": "Ana Sayfa",
+        "go_settings": "Ayarlara Git"
+      }
+    },
+    "home_view": {
+      "values": {
+        "home": "Ana Sayfa",
+        "go_settings": "Ayarlara Git"
+      }
+    },
+    "settings_view": {
+      "values": {
+        "change_language": "Dil Değiştir",
+        "change_of_app": "Uygulamanın dili",
+        "go_back": "Geri Dön",
+        "settings": "Ayarlar",
+        "text_123": "Türkçe Test Metni"
+      }
+    },
+    "language_selector_bottom_sheet": {
+      "values": {
+        "languages": "Diller",
+        "test": "123"
+      }
+    }
+  }
+}

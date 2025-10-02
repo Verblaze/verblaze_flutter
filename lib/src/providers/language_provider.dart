@@ -33,9 +33,12 @@ class VerblazeProvider extends ChangeNotifier {
     return Locale(parts[0], parts[1]);
   }
 
-  /// Sets current language
-  void setLanguage(String languageCode) async {
+  /// Sets current language and loads its translations if needed
+  Future<void> setLanguage(String languageCode) async {
     if (supportedLanguages.any((lang) => lang.code == languageCode)) {
+      // Load the language translations if not already loaded
+      await Verblaze.loadLanguage(languageCode);
+
       _currentLanguage = languageCode;
       await TranslationCache.saveCurrentLanguage(languageCode);
       notifyListeners();
